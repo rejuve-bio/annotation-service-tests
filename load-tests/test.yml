@@ -1,5 +1,5 @@
 config:
-  target: "<the target url>"
+  target: "{{ $processEnvironment.TARGET_URL }}"
 
   socketio:
     transports:
@@ -7,7 +7,7 @@ config:
     upgrade: false
     forceNew: true
     extraHeaders:
-      Authorization: "Bearer <your token>"
+      Authorization: "Bearer {{ $processEnvironment.AUTH_TOKEN }}"
 
   engines:
     socketio: {}
@@ -26,9 +26,6 @@ config:
 
   processor: "./processor.js"
 
-  variables:
-    token: "<your token>"
-
 scenarios:
   - name: "Hybrid POST + Strict WebSocket Flow"
     engine: socketio
@@ -37,7 +34,7 @@ scenarios:
       - post:
           url: "/query"
           headers:
-            Authorization: "Bearer {{ token }}"
+            Authorization: "Bearer {{ $processEnvironment.AUTH_TOKEN }}"
             Content-Type: "application/json"
           json: "{{ payload }}"
           capture:
