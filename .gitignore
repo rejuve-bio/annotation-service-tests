@@ -3,3 +3,4 @@ load-tests/results/*
 !load-tests/results/.gitkeep
 plan.md
 package-lock.json
+.env

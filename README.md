@@ -7,7 +7,7 @@ This repository contains the infrastructure configuration and load-testing suite
 ### 1. Prerequisites
 * **Docker & Docker Compose**
 * **Node.js** (v20.18.1+) and **npm** — required by Artillery's `undici` dependency. Use [nvm](https://github.com/nvm-sh/nvm) to manage versions: `nvm install 20 && nvm use 20`
-* A `.env` file in the root directory (refer to `docker-compose.yml` for required variables like `APP_PORT`, `MONGO_URI`, and `MORK_URL`).
+* A `.env` file in the root directory — copy `.env.example` and fill in your values.
 
 ### 2. Infrastructure Setup
 The service requires MongoDB, Redis, and a Celery worker to function.
@@ -46,29 +46,32 @@ The test target and auth token are passed as environment variables — no secret
 
 | Variable | Description |
 | :--- | :--- |
-| `TARGET_URL` | Base URL of the annotation service (e.g. `http://100.67.47.42:5011`) |
+| `TARGET_URL` | Base URL of the annotation service (e.g. `http://<host>:<port>`) |
 | `AUTH_TOKEN` | Bearer token for the service API |
+| `SPECIES` | Query pool to use: `all` (default), `human`, or `fly` |
 
 ### 3. Execute the Test
 
-Results are saved to `results/` (gitignored) as a timestamped JSON file. After the run, Artillery can convert it to an HTML report.
+Results are saved to `results/` (gitignored) as a timestamped JSON file. After the run, use the provided `generate-report.js` script to convert the latest JSON result into an HTML report.
 
 ```bash
 # Create the results directory once
 mkdir -p results
 
-# Run against the fly instance — prints to terminal and saves JSON
-TARGET_URL=http://100.67.47.42:5011 AUTH_TOKEN=<your_token> \
+# Run all species (default)
+TARGET_URL=http://<host>:<port> AUTH_TOKEN=<your_token> \
+  npx artillery run test.yml --output results/report-$(date +%Y%m%d-%H%M%S).json
+
+# Run only fly queries
+TARGET_URL=http://<host>:<port> AUTH_TOKEN=<your_token> SPECIES=fly \
+  npx artillery run test.yml --output results/report-$(date +%Y%m%d-%H%M%S).json
+
+# Run only human queries
+TARGET_URL=http://<host>:<port> AUTH_TOKEN=<your_token> SPECIES=human \
   npx artillery run test.yml --output results/report-$(date +%Y%m%d-%H%M%S).json
 
 # Generate an HTML report from the latest JSON result
 node generate-report.js results/$(ls -t results/ | head -1)
-```
-
-```bash
-# Run against a human instance (example)
-TARGET_URL=http://<host>:<port> AUTH_TOKEN=<your_token> \
-  npx artillery run test.yml --output results/report-$(date +%Y%m%d-%H%M%S).json
 ```
 
 ---
@@ -89,7 +92,7 @@ Artillery outputs per-query latency histograms labeled `latency_<query name>`, m
 | File | Purpose |
 | :--- | :--- |
 | `test.yml` | Artillery test definition — Socket.io engine, flow, phases |
-| `processor.js` | Thin orchestrator — merges all species query pools, picks randomly |
+| `processor.js` | Thin orchestrator — cycles through the active species query pool in order |
 | `queries/human.js` | 6 human BioAtomSpace query definitions |
 | `queries/fly.js` | 6 Drosophila (FlyBase) query definitions |
 | `utils.js` | Shared helpers (e.g. `generateNodeId`) |
@@ -100,13 +103,15 @@ Artillery outputs per-query latency histograms labeled `latency_<query name>`, m
 ## ➕ Adding a New Species
 
 1. Create `load-tests/queries/<species>.js` and export an array of query generator lambdas. Each lambda must return `{ name, payload }`. See `queries/fly.js` for the pattern.
-2. In `load-tests/processor.js`, import the new file and spread it into `ALL_QUERIES`:
+2. In `load-tests/processor.js`, import the new file and register it in both `SPECIES_MAP` and the `all` spread:
    ```js
    const mouseQueries = require('./queries/mouse');
-   const ALL_QUERIES = [...humanQueries, ...flyQueries, ...mouseQueries];
+   const SPECIES_MAP = { human: humanQueries, fly: flyQueries, mouse: mouseQueries };
+   // then in the ALL_QUERIES 'all' branch:
+   ? [...humanQueries, ...flyQueries, ...mouseQueries]
    ```
 
-That's it — the new queries will be included in the random selection pool automatically.
+That's it — `SPECIES=mouse` will work and `SPECIES=all` will include the new queries in the cycle.
 
 ---
 
