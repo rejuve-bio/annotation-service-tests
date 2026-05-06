@@ -32,6 +32,15 @@ const endMs   = agg.lastMetricAt;
 const durationSec = ((endMs - startMs) / 1000).toFixed(0);
 const startStr = new Date(startMs).toLocaleString();
 
+function escapeHtml(str) {
+    return String(str)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#39;');
+}
+
 function ms(v) {
     if (v === undefined || v === null) return '—';
     return v >= 1000 ? (v / 1000).toFixed(2) + ' s' : Math.round(v) + ' ms';
@@ -72,7 +81,7 @@ function barRow(e) {
     const p95Pct = ((e.p95    / maxVal) * 100).toFixed(1);
     return `
     <tr>
-      <td class="bar-label">${e.label}</td>
+      <td class="bar-label">${escapeHtml(e.label)}</td>
       <td class="bar-cell">
         <div class="bar-track">
           <div class="bar-p95"  style="width:${p95Pct}%"></div>
@@ -120,7 +129,7 @@ const html = `<!DOCTYPE html>
 </head>
 <body>
 <h1>Artillery Load Test Report</h1>
-<p class="meta">Started: ${startStr} &nbsp;·&nbsp; Duration: ${durationSec}s &nbsp;·&nbsp; Source: ${path.basename(inputFile)}</p>
+<p class="meta">Started: ${escapeHtml(startStr)} &nbsp;·&nbsp; Duration: ${durationSec}s &nbsp;·&nbsp; Source: ${escapeHtml(path.basename(inputFile))}</p>
 
 <h2>Summary</h2>
 <div class="cards">

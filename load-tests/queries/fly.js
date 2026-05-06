@@ -1,8 +1,5 @@
 const { generateNodeId } = require('../utils');
 
-// All gene names verified in /mnt/hdd_1/biocypher-kg/output/dmel/metta/gencode/gene/nodes_gene.metta
-// Protein P92177 verified working via Postman against http://100.67.47.42:5011
-
 module.exports = [
     // Fly Q1: Simple gene lookup — "w" (white, FBGN0003996)
     () => {

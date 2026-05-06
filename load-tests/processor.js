@@ -1,8 +1,18 @@
 const humanQueries = require('./queries/human');
 const flyQueries   = require('./queries/fly');
-// To add a new species: create queries/<species>.js and spread it into ALL_QUERIES below
 
-const ALL_QUERIES = [...humanQueries, ...flyQueries];
+const SPECIES_MAP = { human: humanQueries, fly: flyQueries };
+const species = (process.env.SPECIES || 'all').toLowerCase();
+
+const ALL_QUERIES = species === 'all'
+    ? [...humanQueries, ...flyQueries]
+    : (() => {
+        const pool = SPECIES_MAP[species];
+        if (!pool) throw new Error(`Unknown SPECIES "${species}". Valid values: ${Object.keys(SPECIES_MAP).join(', ')}, all`);
+        return pool;
+    })();
+
+let queryIndex = 0;
 
 module.exports = {
     generatePayload,
@@ -10,7 +20,8 @@ module.exports = {
 };
 
 function generatePayload(context, events, done) {
-    const selected = ALL_QUERIES[Math.floor(Math.random() * ALL_QUERIES.length)]();
+    const selected = ALL_QUERIES[queryIndex % ALL_QUERIES.length]();
+    queryIndex++;
 
     context.vars.payload   = selected.payload;
     context.vars.queryName = selected.name;
@@ -43,14 +54,14 @@ function waitForCompletion(context, events, done) {
             socket.off('update', listener);
         }
         done(new Error('Timeout waiting for COMPLETE status'));
-    }, 40 * 60 * 1000);
+    }, Number(process.env.COMPLETION_TIMEOUT_MS) || 40 * 60 * 1000);
 
     const listener = (data) => {
         if (typeof data === 'string') {
             try { data = JSON.parse(data); } catch (e) { }
         }
 
-        if (data.update.graph === true) {
+        if (data?.update?.graph === true) {
             clearTimeout(timeoutHandle);
             socket.off('socket_event', listener);
             socket.off('update', listener);
@@ -59,7 +70,7 @@ function waitForCompletion(context, events, done) {
             events.emit('histogram', `latency_${context.vars.queryName}`, duration);
             return done();
         }
-        else if (data.status === 'FAILED' || data.status === 'CANCELLED') {
+        else if (data?.status === 'FAILED' || data?.status === 'CANCELLED') {
             clearTimeout(timeoutHandle);
             socket.off('socket_event', listener);
             socket.off('update', listener);
