@@ -28,7 +28,7 @@ module.exports = [
                         { node_id: n3, id: "", type: "protein", properties: {} }
                     ],
                     predicates: [
-                        { predicate_id: generateNodeId(), type: "transcribed_from", source: n2, target: n1 },
+                        { predicate_id: generateNodeId(), type: "transcribes_to", source: n1, target: n2 },
                         { predicate_id: generateNodeId(), type: "translates_to", source: n2, target: n3 }
                     ]
                 }
@@ -50,7 +50,7 @@ module.exports = [
                         { node_id: n4, id: "", type: "tad", properties: {} }
                     ],
                     predicates: [
-                        { predicate_id: generateNodeId(), type: "genes_pathways", source: n1, target: n2 },
+                        { predicate_id: generateNodeId(), type: "participates_in", source: n1, target: n2 },
                         { predicate_id: generateNodeId(), type: "child_pathway_of", source: n3, target: n2 },
                         { predicate_id: generateNodeId(), type: "in_tad_region", source: n1, target: n4 }
                     ]
@@ -72,9 +72,9 @@ module.exports = [
                         { node_id: "aUrcYASglAn", id: "", type: "pathway", properties: {} }
                     ],
                     predicates: [
-                        { predicate_id: "JGjZQCeiTk", type: "transcribed to", source: "aZaDXDJEjFw", target: "aYXWRRxQBMN" },
-                        { predicate_id: "ptmiucZALr", type: "translates to", source: "aYXWRRxQBMN", target: "aJCuFsXtDDG" },
-                        { predicate_id: "JVETIrSdrt", type: "genes pathways", source: "aZaDXDJEjFw", target: "aUrcYASglAn" }
+                        { predicate_id: "JGjZQCeiTk", type: "transcribes_to", source: "aZaDXDJEjFw", target: "aYXWRRxQBMN" },
+                        { predicate_id: "ptmiucZALr", type: "translates_to", source: "aYXWRRxQBMN", target: "aJCuFsXtDDG" },
+                        { predicate_id: "JVETIrSdrt", type: "participates_in", source: "aZaDXDJEjFw", target: "aUrcYASglAn" }
                     ]
                 }
             }
@@ -95,10 +95,10 @@ module.exports = [
                         { node_id: "n5", id: "", type: "pathway", properties: {} }
                     ],
                     predicates: [
-                        { predicate_id: "p1", type: "associated with", source: "n1", target: "n2" },
-                        { predicate_id: "p2", type: "associated with", source: "n3", target: "n2" },
-                        { predicate_id: "p3", type: "genes pathways", source: "n2", target: "n4" },
-                        { predicate_id: "p4", type: "child pathway of", source: "n5", target: "n4" }
+                        { predicate_id: "p1", type: "associated_with", source: "n1", target: "n2" },
+                        { predicate_id: "p2", type: "associated_with", source: "n3", target: "n2" },
+                        { predicate_id: "p3", type: "participates_in", source: "n2", target: "n4" },
+                        { predicate_id: "p4", type: "child_pathway_of", source: "n5", target: "n4" }
                     ]
                 }
             }
@@ -118,7 +118,7 @@ module.exports = [
                     ],
                     predicates: [
                         { predicate_id: "p1", type: "includes", source: "n1", target: "n2" },
-                        { predicate_id: "p2", type: "transcribed_from", source: "n1", target: "n3" }
+                        { predicate_id: "p2", type: "transcribes_to", source: "n3", target: "n1" }
                     ]
                 }
             }
