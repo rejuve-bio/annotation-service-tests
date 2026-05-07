@@ -34,7 +34,7 @@ function generatePayload(context, events, done) {
  * Listens for Socket.IO completion events and records per-query latency.
  */
 function waitForCompletion(context, events, done) {
-    let socket = context.sockets[""];
+    let socket = context.sockets?.[""];
 
     if (!socket && context.sockets) {
         const socketKeys = Object.keys(context.sockets);
