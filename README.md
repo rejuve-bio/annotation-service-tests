@@ -42,35 +42,53 @@ npm install
 ```
 
 ### 2. Configure via Environment Variables
-The test target and auth token are passed as environment variables — no secrets are stored in files.
+The test target and auth token are passed as environment variables — no secrets are stored in tracked files.
 
 | Variable | Description |
 | :--- | :--- |
 | `TARGET_URL` | Base URL of the annotation service (e.g. `http://<host>:<port>`) |
 | `AUTH_TOKEN` | Bearer token for the service API |
 | `SPECIES` | Query pool to use: `all` (default), `human`, or `fly` |
+| `COMPLETION_TIMEOUT_MS` | Socket.IO wait timeout in ms (default: `2400000` = 40 min) |
+
+**Option A — `.env` file (recommended for repeated runs)**
+
+Copy the example file and fill in your values:
+```bash
+cp ../.env.example ../.env
+# edit .env with your TARGET_URL, AUTH_TOKEN, and SPECIES
+```
+
+Then source it before running:
+```bash
+set -a && source ../.env && set +a
+npx artillery run test.yml --output results/report-$(date +%Y%m%d-%H%M%S).json
+```
+
+**Option B — inline env vars (one-off runs)**
+
+Pass variables directly on the command line without a `.env` file.
 
 ### 3. Execute the Test
 
-Results are saved to `results/` (gitignored) as a timestamped JSON file. After the run, use the provided `generate-report.js` script to convert the latest JSON result into an HTML report.
+Results are saved to `results/` (gitignored) as a timestamped JSON file. After the run, use `generate-report.js` to produce an HTML report.
 
 ```bash
-# Create the results directory once
-mkdir -p results
+# --- Using .env (Option A) ---
+set -a && source ../.env && set +a
+npx artillery run test.yml --output results/report-$(date +%Y%m%d-%H%M%S).json
 
-# Run all species (default)
-TARGET_URL=http://<host>:<port> AUTH_TOKEN=<your_token> \
+# --- Inline (Option B) ---
+
+# Run fly queries only
+TARGET_URL=http://100.67.47.42:5011 AUTH_TOKEN=<your_token> SPECIES=fly \
   npx artillery run test.yml --output results/report-$(date +%Y%m%d-%H%M%S).json
 
-# Run only fly queries
-TARGET_URL=http://<host>:<port> AUTH_TOKEN=<your_token> SPECIES=fly \
+# Run all species
+TARGET_URL=http://<host>:<port> AUTH_TOKEN=<your_token> SPECIES=all \
   npx artillery run test.yml --output results/report-$(date +%Y%m%d-%H%M%S).json
 
-# Run only human queries
-TARGET_URL=http://<host>:<port> AUTH_TOKEN=<your_token> SPECIES=human \
-  npx artillery run test.yml --output results/report-$(date +%Y%m%d-%H%M%S).json
-
-# Generate an HTML report from the latest JSON result
+# --- Generate HTML report (both options) ---
 node generate-report.js results/$(ls -t results/ | head -1)
 ```
 
