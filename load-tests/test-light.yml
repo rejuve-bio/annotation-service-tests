@@ -1,0 +1,44 @@
+config:
+  target: "{{ $processEnvironment.TARGET_URL }}"
+
+  socketio:
+    transports:
+      - "websocket"
+    upgrade: false
+    forceNew: true
+    extraHeaders:
+      Authorization: "Bearer {{ $processEnvironment.AUTH_TOKEN }}"
+
+  engines:
+    socketio: {}
+
+  plugins:
+    metrics-by-endpoint: { useOnlyRequestNames: true }
+
+  phases:
+    - name: "Light — sustained low concurrency"
+      duration: 120
+      arrivalRate: 1
+      maxVusers: 5
+
+  processor: "./processor.js"
+
+scenarios:
+  - name: "Hybrid POST + Strict WebSocket Flow"
+    engine: socketio
+    flow:
+      - function: "generatePayload"
+      - post:
+          url: "/query"
+          headers:
+            Authorization: "Bearer {{ $processEnvironment.AUTH_TOKEN }}"
+            Content-Type: "application/json"
+          json: "{{ payload }}"
+          capture:
+            - json: "$.annotation_id"
+              as: "annotation_id"
+      - emit:
+          channel: "join"
+          data:
+            room: "{{ annotation_id }}"
+      - function: "waitForCompletion"
