@@ -51,55 +51,57 @@ The test target and auth token are passed as environment variables — no secret
 | `SPECIES` | Query pool to use: `all` (default), `human`, or `fly` |
 | `COMPLETION_TIMEOUT_MS` | Socket.IO wait timeout in ms (default: `2400000` = 40 min) |
 
-**Option A — `.env` file (recommended for repeated runs)**
-
 Copy the example file and fill in your values:
 ```bash
 cp ../.env.example ../.env
 # edit .env with your TARGET_URL, AUTH_TOKEN, and SPECIES
 ```
 
-Then source it before running:
-```bash
-set -a && source ../.env && set +a
-npx artillery run test.yml --output results/report-$(date +%Y%m%d-%H%M%S).json
-```
-
-**Option B — inline env vars (one-off runs)**
-
-Pass variables directly on the command line without a `.env` file.
+`run-test.sh` auto-sources `.env` from the repo root, so no manual `source` step is needed.
 
 ### 3. Execute the Test
 
-Results are saved to `results/` (gitignored) as a timestamped JSON file. After the run, use `generate-report.js` to produce an HTML report.
+Use `scripts/run-test.sh` to run a tier. It creates a timestamped results directory, starts the system monitor in the background, runs Artillery, and generates an HTML report on exit.
+
+```
+./scripts/run-test.sh <tier> <backend> <label>
+```
+
+| Argument | Values | Purpose |
+| :--- | :--- | :--- |
+| `tier` | `light` \| `moderate` \| `heavy` | Selects the load profile |
+| `backend` | `mork_cli` \| `neo4j` | Used in the results directory name only |
+| `label` | `baseline` \| `optionA` \| … | Used in the results directory name only |
 
 ```bash
-# --- Using .env (Option A) ---
-set -a && source ../.env && set +a
-npx artillery run test.yml --output results/report-$(date +%Y%m%d-%H%M%S).json
+# Baseline light run against mork_cli
+./scripts/run-test.sh light mork_cli baseline
 
-# --- Inline (Option B) ---
+# Heavy stress run to compare an optimisation
+./scripts/run-test.sh heavy mork_cli optionA
 
-# Run fly queries only
-TARGET_URL=http://100.67.47.42:5011 AUTH_TOKEN=<your_token> SPECIES=fly \
-  npx artillery run test.yml --output results/report-$(date +%Y%m%d-%H%M%S).json
-
-# Run all species
-TARGET_URL=http://<host>:<port> AUTH_TOKEN=<your_token> SPECIES=all \
-  npx artillery run test.yml --output results/report-$(date +%Y%m%d-%H%M%S).json
-
-# --- Generate HTML report (both options) ---
-node generate-report.js results/$(ls -t results/ | head -1)
+# Moderate run against neo4j
+./scripts/run-test.sh moderate neo4j baseline
 ```
+
+Results are saved to `load-tests/results/<backend>-<label>-<tier>-<timestamp>/` (gitignored) and include:
+
+| File | Contents |
+| :--- | :--- |
+| `artillery.json` | Raw Artillery metrics |
+| `artillery.html` | HTML report (generated on exit) |
+| `system-metrics.csv` | Container count, memory, CPU, and Redis queue depth over time |
+| `notes.md` | Pre-filled run metadata — add observations after the run |
 
 ---
 
-## 📊 Test Phases
+## 📊 Load Test Tiers
 
-| Phase | Duration | Arrival Rate | Description |
-| :--- | :--- | :--- | :--- |
-| **Warm up** | 10s | 10 users/s | Initial baseline traffic. |
-| **Ramp up** | 60s | 10 ➔ 25 users/s | Increasing load to test Mork version stability. |
+| Tier | Duration | Arrival Rate | Max VUs | Use case |
+| :--- | :--- | :--- | :--- | :--- |
+| **light** | 120s | 1/s (constant) | 5 | Baseline / smoke test |
+| **moderate** | 120s | 3/s (constant) | 20 | Typical sustained load |
+| **heavy** | 10s warm-up + 60s ramp | 10 ➔ 25/s | — | Stress / peak capacity |
 
 Artillery outputs per-query latency histograms labeled `latency_<query name>`, making it easy to compare complexity costs across query types and species.
 
@@ -109,12 +111,16 @@ Artillery outputs per-query latency histograms labeled `latency_<query name>`, m
 
 | File | Purpose |
 | :--- | :--- |
-| `test.yml` | Artillery test definition — Socket.io engine, flow, phases |
-| `processor.js` | Thin orchestrator — cycles through the active species query pool in order |
-| `queries/human.js` | 6 human BioAtomSpace query definitions |
-| `queries/fly.js` | 6 Drosophila (FlyBase) query definitions |
-| `utils.js` | Shared helpers (e.g. `generateNodeId`) |
-| `config.yaml` | **Must** have `type: mork` for this test suite |
+| `scripts/run-test.sh` | Orchestrator — runs a tier, monitors system resources, saves results |
+| `scripts/monitor-system.sh` | Polls Docker stats and Redis queue depth into CSV every 5s |
+| `load-tests/test-light.yml` | Light tier: 1/s, max 5 VUs, 120s |
+| `load-tests/test-moderate.yml` | Moderate tier: 3/s, max 20 VUs, 120s |
+| `load-tests/test-heavy.yml` | Heavy tier: 10→25/s ramp |
+| `load-tests/processor.js` | Thin orchestrator — cycles through the active species query pool in order |
+| `load-tests/queries/human.js` | 6 human BioAtomSpace query definitions |
+| `load-tests/queries/fly.js` | 6 Drosophila (FlyBase) query definitions |
+| `load-tests/utils.js` | Shared helpers (e.g. `generateNodeId`) |
+| `config/config.yaml` | **Must** have `type: mork` for this test suite |
 
 ---
 
