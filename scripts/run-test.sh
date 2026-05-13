@@ -14,7 +14,7 @@
 #   ./scripts/run-test.sh heavy mork_cli optionA
 #   ./scripts/run-test.sh moderate neo4j baseline
 #
-# Env vars (from .env):
+# Env vars (auto-sourced from $REPO_DIR/.env when present):
 #   TARGET_URL, AUTH_TOKEN, SPECIES
 #   REDIS_PORT, REDIS_DB, INTERVAL (passed to monitor-system.sh)
 
@@ -26,6 +26,10 @@ LABEL="${3:?Usage: $0 <tier> <backend> <label>}"
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 REPO_DIR="$(cd "$SCRIPT_DIR/.." && pwd)"
+
+# shellcheck source=/dev/null
+[ -f "$REPO_DIR/.env" ] && source "$REPO_DIR/.env"
+
 LOAD_DIR="$REPO_DIR/load-tests"
 RESULTS_BASE="$LOAD_DIR/results"
 

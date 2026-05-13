@@ -16,7 +16,7 @@ config:
     metrics-by-endpoint: { useOnlyRequestNames: true }
 
   phases:
-    - name: "Moderate — ramp to moderate concurrency"
+    - name: "Moderate — sustained moderate concurrency"
       duration: 120
       arrivalRate: 3
       maxVusers: 20

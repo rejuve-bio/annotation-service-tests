@@ -3,14 +3,14 @@
 # Run this alongside Artillery: ./scripts/monitor-system.sh results/<run-dir>/system-metrics.csv
 #
 # Env overrides:
-#   REDIS_PORT   - Redis host port (default 6380, matches annotation-query-backend default)
+#   REDIS_PORT   - Redis host port (default 6399, matches docker-compose.yml host mapping)
 #   REDIS_DB     - Redis DB for Celery broker (default 1)
 #   INTERVAL     - Poll interval in seconds (default 5)
 
 set -euo pipefail
 
 OUTPUT_FILE="${1:?Usage: $0 <output-csv>}"
-REDIS_PORT="${REDIS_PORT:-6380}"
+REDIS_PORT="${REDIS_PORT:-6399}"
 REDIS_DB="${REDIS_DB:-1}"
 INTERVAL="${INTERVAL:-5}"
 
@@ -37,7 +37,7 @@ echo "Monitoring started → $OUTPUT_FILE  (Ctrl-C to stop)"
 while true; do
     TS=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
 
-    MORK_COUNT=$(docker ps --filter "ancestor=mork:latest" --format "{{.ID}}" 2>/dev/null | wc -l | tr -d ' ')
+    MORK_COUNT=$(docker ps --filter "ancestor=mork:latest" --format "{{.ID}}" 2>/dev/null | wc -l | tr -d ' ') || MORK_COUNT=0
 
     ANN_CTR=$(_get_ctr "annotation_service")
     CEL_CTR=$(_get_ctr "celery_worker")
