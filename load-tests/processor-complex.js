@@ -6,6 +6,9 @@ const humanQueries = require('./queries/human');
 const COMPLEX_QUERIES = [humanQueries[4], humanQueries[6]];
 
 // Validate indices still point to the expected queries — fail fast if human.js ordering changes
+if (!COMPLEX_QUERIES.every(fn => typeof fn === 'function')) {
+    throw new Error('processor-complex.js: humanQueries[4] or humanQueries[6] is missing — check queries/human.js ordering.');
+}
 const _names = COMPLEX_QUERIES.map(fn => fn().name);
 if (_names[0] !== 'Query 4b: IGF2 Regulatory' || _names[1] !== 'Query 7: CARD9 Disease Chain') {
     throw new Error(`processor-complex.js: unexpected queries at indices 4/6: [${_names.join(', ')}]. Check queries/human.js ordering.`);
