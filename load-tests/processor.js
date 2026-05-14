@@ -1,11 +1,15 @@
 const humanQueries = require('./queries/human');
 const flyQueries   = require('./queries/fly');
 
-const SPECIES_MAP = { human: humanQueries, fly: flyQueries };
+// Indices excluded from the standard rotation (reserved for complex isolation test)
+const EXCLUDED_HUMAN_INDICES = new Set([6]); // Human Query A (CARD9) — not in original baseline
+const humanQueriesFiltered = humanQueries.filter((_, i) => !EXCLUDED_HUMAN_INDICES.has(i));
+
+const SPECIES_MAP = { human: humanQueriesFiltered, fly: flyQueries };
 const species = (process.env.SPECIES || 'all').toLowerCase();
 
 const ALL_QUERIES = species === 'all'
-    ? [...humanQueries, ...flyQueries]
+    ? [...humanQueriesFiltered, ...flyQueries]
     : (() => {
         const pool = SPECIES_MAP[species];
         if (!pool) throw new Error(`Unknown SPECIES "${species}". Valid values: ${Object.keys(SPECIES_MAP).join(', ')}, all`);
