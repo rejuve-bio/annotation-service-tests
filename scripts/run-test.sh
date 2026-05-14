@@ -28,7 +28,11 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 REPO_DIR="$(cd "$SCRIPT_DIR/.." && pwd)"
 
 # shellcheck source=/dev/null
-[ -f "$REPO_DIR/.env" ] && source "$REPO_DIR/.env"
+if [ -f "$REPO_DIR/.env" ]; then
+    set -a
+    source "$REPO_DIR/.env"
+    set +a
+fi
 
 LOAD_DIR="$REPO_DIR/load-tests"
 RESULTS_BASE="$LOAD_DIR/results"
