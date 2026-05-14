@@ -1,36 +1,25 @@
+// Processor for test-complex.yml — cycles only through the two complex queries:
+//   index 4: Query 4b (IGF2 Regulatory, 5 nodes / 4 predicates)
+//   index 6: Query 7 (CARD9 Disease Chain, 3 nodes / 2 predicates with associated_with + is_a)
 const humanQueries = require('./queries/human');
-const flyQueries   = require('./queries/fly');
 
-// Indices excluded from the standard rotation (reserved for complex isolation test)
-const EXCLUDED_HUMAN_INDICES = new Set([6]); // Query 7 (CARD9) — degenerate, not in original baseline
+const COMPLEX_QUERIES = [humanQueries[4], humanQueries[6]];
 
-// Validate index 6 is still the expected query — fail fast if human.js ordering changes
-if (humanQueries[6]?.()?.name !== 'Query 7: CARD9 Disease Chain') {
-    throw new Error(`processor.js: index 6 is not "Query 7: CARD9 Disease Chain". Check queries/human.js ordering.`);
+// Validate indices still point to the expected queries — fail fast if human.js ordering changes
+if (!COMPLEX_QUERIES.every(fn => typeof fn === 'function')) {
+    throw new Error('processor-complex.js: humanQueries[4] or humanQueries[6] is missing — check queries/human.js ordering.');
 }
-
-const humanQueriesFiltered = humanQueries.filter((_, i) => !EXCLUDED_HUMAN_INDICES.has(i));
-
-const SPECIES_MAP = { human: humanQueriesFiltered, fly: flyQueries };
-const species = (process.env.SPECIES || 'all').toLowerCase();
-
-const ALL_QUERIES = species === 'all'
-    ? [...humanQueriesFiltered, ...flyQueries]
-    : (() => {
-        const pool = SPECIES_MAP[species];
-        if (!pool) throw new Error(`Unknown SPECIES "${species}". Valid values: ${Object.keys(SPECIES_MAP).join(', ')}, all`);
-        return pool;
-    })();
+const _names = COMPLEX_QUERIES.map(fn => fn().name);
+if (_names[0] !== 'Query 4b: IGF2 Regulatory' || _names[1] !== 'Query 7: CARD9 Disease Chain') {
+    throw new Error(`processor-complex.js: unexpected queries at indices 4/6: [${_names.join(', ')}]. Check queries/human.js ordering.`);
+}
 
 let queryIndex = 0;
 
-module.exports = {
-    generatePayload,
-    waitForCompletion
-};
+module.exports = { generatePayload, waitForCompletion };
 
 function generatePayload(context, events, done) {
-    const selected = ALL_QUERIES[queryIndex % ALL_QUERIES.length]();
+    const selected = COMPLEX_QUERIES[queryIndex % COMPLEX_QUERIES.length]();
     queryIndex++;
 
     context.vars.payload   = selected.payload;
@@ -40,9 +29,6 @@ function generatePayload(context, events, done) {
     return done();
 }
 
-/**
- * Listens for Socket.IO completion events and records per-query latency.
- */
 function waitForCompletion(context, events, done) {
     let socket = context.sockets?.[""];
 
@@ -79,8 +65,7 @@ function waitForCompletion(context, events, done) {
             const duration = Date.now() - context.vars.startTime;
             events.emit('histogram', `latency_${context.vars.queryName}`, duration);
             return done();
-        }
-        else if (data?.status === 'FAILED' || data?.status === 'CANCELLED') {
+        } else if (data?.status === 'FAILED' || data?.status === 'CANCELLED') {
             clearTimeout(timeoutHandle);
             socket.off('socket_event', listener);
             socket.off('update', listener);

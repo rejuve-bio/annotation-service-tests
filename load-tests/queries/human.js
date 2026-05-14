@@ -123,5 +123,26 @@ module.exports = [
                 }
             }
         };
+    },
+
+    // Query 7: CARD9 gene → disease associations → disease ontology parent
+    () => {
+        const n1 = generateNodeId(), n2 = generateNodeId(), n3 = generateNodeId();
+        return {
+            name: "Query 7: CARD9 Disease Chain",
+            payload: {
+                requests: {
+                    nodes: [
+                        { node_id: n1, id: "", type: "gene", properties: { gene_name: "CARD9" } },
+                        { node_id: n2, id: "", type: "disease", properties: {} },
+                        { node_id: n3, id: "", type: "disease", properties: {} }
+                    ],
+                    predicates: [
+                        { predicate_id: generateNodeId(), type: "associated_with", source: n1, target: n2 },
+                        { predicate_id: generateNodeId(), type: "is_a", source: n2, target: n3 }
+                    ]
+                }
+            }
+        };
     }
 ];
