@@ -120,10 +120,10 @@ Artillery outputs per-query latency histograms labeled `latency_<query name>`, m
 | `load-tests/test-light.yml` | Light tier: 1/s, max 5 VUs, 120s |
 | `load-tests/test-moderate.yml` | Moderate tier: 3/s, max 20 VUs, 120s |
 | `load-tests/test-heavy.yml` | Heavy tier: 10→25/s ramp |
-| `load-tests/processor.js` | Cycles through the active species query pool; excludes degenerate queries (Q4b, CARD9) reserved for the complex tier |
+| `load-tests/processor.js` | Cycles through the active species query pool; excludes CARD9 (Q7) from the standard rotation by default — Q4b can also be excluded via `EXCLUDED_HUMAN_INDICES` |
 | `load-tests/processor-complex.js` | Processor for `test-complex.yml` — cycles Q4b and CARD9 only |
 | `load-tests/test-complex.yml` | Complex isolation tier: single user, 60s, uses `processor-complex.js` |
-| `load-tests/queries/human.js` | 7 human BioAtomSpace query definitions (Q1–Q6 + CARD9 disease chain) |
+| `load-tests/queries/human.js` | 7 human BioAtomSpace query definitions (Q1, Q2, Q3, Q4a, Q4b, Q6, and Q7 CARD9 disease chain) |
 | `load-tests/queries/fly.js` | 6 Drosophila (FlyBase) query definitions |
 | `load-tests/utils.js` | Shared helpers (e.g. `generateNodeId`) |
 | `config/config.yaml` | **Must** have `type: mork` for this test suite |

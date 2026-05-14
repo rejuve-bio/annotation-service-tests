@@ -2,7 +2,13 @@ const humanQueries = require('./queries/human');
 const flyQueries   = require('./queries/fly');
 
 // Indices excluded from the standard rotation (reserved for complex isolation test)
-const EXCLUDED_HUMAN_INDICES = new Set([6]); // Human Query A (CARD9) — not in original baseline
+const EXCLUDED_HUMAN_INDICES = new Set([6]); // Query 7 (CARD9) — degenerate, not in original baseline
+
+// Validate index 6 is still the expected query — fail fast if human.js ordering changes
+if (humanQueries[6]?.().name !== 'Query 7: CARD9 Disease Chain') {
+    throw new Error(`processor.js: index 6 is not "Query 7: CARD9 Disease Chain". Check queries/human.js ordering.`);
+}
+
 const humanQueriesFiltered = humanQueries.filter((_, i) => !EXCLUDED_HUMAN_INDICES.has(i));
 
 const SPECIES_MAP = { human: humanQueriesFiltered, fly: flyQueries };

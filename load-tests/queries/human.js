@@ -125,11 +125,11 @@ module.exports = [
         };
     },
 
-    // Human Query A: CARD9 gene → disease associations → disease ontology parent
+    // Query 7: CARD9 gene → disease associations → disease ontology parent
     () => {
         const n1 = generateNodeId(), n2 = generateNodeId(), n3 = generateNodeId();
         return {
-            name: "Human Query A: CARD9 Disease Chain",
+            name: "Query 7: CARD9 Disease Chain",
             payload: {
                 requests: {
                     nodes: [
@@ -140,9 +140,7 @@ module.exports = [
                     predicates: [
                         { predicate_id: generateNodeId(), type: "associated_with", source: n1, target: n2 },
                         { predicate_id: generateNodeId(), type: "is_a", source: n2, target: n3 }
-                    ],
-                    source: ["all"],
-                    species: "human"
+                    ]
                 }
             }
         };

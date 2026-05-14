@@ -1,9 +1,15 @@
 // Processor for test-complex.yml — cycles only through the two complex queries:
 //   index 4: Query 4b (IGF2 Regulatory, 5 nodes / 4 predicates)
-//   index 6: Human Query A (CARD9 Disease Chain, 3 nodes / 2 predicates with associated_with + is_a)
+//   index 6: Query 7 (CARD9 Disease Chain, 3 nodes / 2 predicates with associated_with + is_a)
 const humanQueries = require('./queries/human');
 
 const COMPLEX_QUERIES = [humanQueries[4], humanQueries[6]];
+
+// Validate indices still point to the expected queries — fail fast if human.js ordering changes
+const _names = COMPLEX_QUERIES.map(fn => fn().name);
+if (_names[0] !== 'Query 4b: IGF2 Regulatory' || _names[1] !== 'Query 7: CARD9 Disease Chain') {
+    throw new Error(`processor-complex.js: unexpected queries at indices 4/6: [${_names.join(', ')}]. Check queries/human.js ordering.`);
+}
 
 let queryIndex = 0;
 
